@@ -1,60 +1,104 @@
-import './style.css'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.js'
+"use strict"
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+const bookmark = {
+  header: document.querySelector("header"),
+  menuOpenButton: document.querySelector("button[aria-label='Open menu']"),
+  menuCloseButton: document.querySelector("button[aria-label='Close menu']"),
+  mainMenu: document.querySelector("#menu"),
+  tablist: document.querySelector(".tablist"),
+  tabItems: document.querySelectorAll("[data-position]"),
+  faq: document.querySelector(".faq-container"),
+  form: document.querySelector("form[name='newsletter-form']"),
 
-<div class="ticks"></div>
+  init() {
+    this.header.addEventListener("click", this.toggleMobileMenu.bind(this));
+    this.tablist.addEventListener("click", this.changeTabOnClick.bind(this));
+    this.faq.addEventListener("click", this.toggleFaqBlockOnClick.bind(this));
+    this.form.addEventListener("submit", this.showMessageForSuccessfulSubmit.bind(this))
+  },
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+  toggleMobileMenu(event) {
+    let target = event.target.closest("button[aria-label='Open menu'], button[aria-label='Close menu']");
+    if (!target) return;
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+    if (target == this.menuOpenButton) {
+      this.openMenu();
+    } else if (target == this.menuCloseButton) {
+      this.closeMenu();
+    }
+  },
+  
+  openMenu() {
+    this.mainMenu.classList.add("mobile-menu-active");
+    this.menuOpenButton.setAttribute("aria-expanded", "true");
+    this.closeMenuByResize = this.closeMenu.bind(this);
+    window.addEventListener("resize", this.closeMenuByResize);
+    this.closeMenuByEscape = this.closeMenuForKeydown.bind(this);
+    window.addEventListener("keydown", this.closeMenuByEscape);
+    this.menuCloseButton.focus();
 
-setupCounter(document.querySelector('#counter'))
+  },
+
+  closeMenu() {
+    this.mainMenu.classList.remove("mobile-menu-active");
+    this.menuOpenButton.setAttribute("aria-expanded", "false");
+    window.removeEventListener("resize", this.closeMenuByResize);
+    window.removeEventListener("keydown", this.closeMenuByEscape);
+    this.menuOpenButton.focus();
+  },
+
+  closeMenuForKeydown(event) {
+    if (event.key === "Escape") {
+      this.closeMenu()
+    }
+  },
+
+  changeTabOnClick(event) {
+    const target = event.target.closest("[data-position]");
+    if (target.matches(".tab-active")) return;
+
+    for(let tabItem of this.tabItems) {
+      if (tabItem.matches(".tab-active")) {
+        tabItem.classList.remove("tab-active");
+        const tab = tabItem.firstElementChild;
+        tab.setAttribute("aria-selected", "false");
+
+        const tabpanel = document.querySelector(`[aria-labelledby='${tab.id}']`);
+        tabpanel.classList.remove("tabpanel-active");
+      }
+
+      if (tabItem === target) {
+        tabItem.classList.add("tab-active");
+        const tab = tabItem.firstElementChild;
+        tab.setAttribute("aria-selected", "true");
+
+        const tabpanel = document.querySelector(`[aria-labelledby='${tab.id}']`);
+        tabpanel.classList.add("tabpanel-active");
+      }
+    }
+  },
+
+  toggleFaqBlockOnClick(event) {
+    const button = event.target.closest('.faq-toggle-btn');
+    if (!button) return
+
+    let newValue;
+    if (button.getAttribute("aria-expanded") === "true") {
+      newValue = "false";
+    } else if (button.getAttribute("aria-expanded") === "false") {
+      newValue = "true";
+    }
+    button.setAttribute("aria-expanded", newValue)
+
+    const id = button.getAttribute("aria-controls");
+    document.querySelector(`#${id}`).classList.toggle("open");
+  },
+
+  showMessageForSuccessfulSubmit(event) {
+    event.preventDefault();
+    alert("thanks");
+    this.form.querySelector(".newsletter-field").value = "";
+  }
+}
+
+bookmark.init();
